@@ -1,0 +1,19 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f3f4f6"/>
+  <rect x="50" y="50" width="300" height="200" fill="white" stroke="#d1d5db" stroke-width="2" rx="8"/>
+  
+  <!-- Inverter display -->
+  <rect x="80" y="80" width="240" height="60" fill="#1f2937" rx="4"/>
+  <text x="200" y="115" font-family="monospace" font-size="16" fill="#10b981" text-anchor="middle">2000W Modified Sine</text>
+  
+  <!-- Ventilation slots -->
+  <g fill="#9ca3af">
+    <rect x="100" y="160" width="200" height="8" rx="2"/>
+    <rect x="100" y="175" width="200" height="8" rx="2"/>
+    <rect x="100" y="190" width="200" height="8" rx="2"/>
+  </g>
+  
+  <!-- Power indicator -->
+  <circle cx="320" cy="100" r="8" fill="#f59e0b"/>
+  <text x="200" y="250" font-family="Arial, sans-serif" font-size="18" fill="#374151" text-anchor="middle">Modified Sine Wave Inverter 2000W</text>
+</svg>
