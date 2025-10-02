@@ -149,17 +149,53 @@ src/
 
 ## Deployment
 
-### Self-hosted Server
+### GitHub Repository Setup
 
+1. **Create a new repository on GitHub:**
+   - Go to GitHub.com and create a new repository
+   - Name it `jbinverters` (or your preferred name)
+   - Don't initialize with README (we already have one)
+
+2. **Push your code to GitHub:**
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/jbinverters.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+3. **Set up GitHub Secrets:**
+   Go to your repository → Settings → Secrets and variables → Actions, and add:
+   - `NEXTAUTH_SECRET` - Generate a random secret key
+   - `NEXTAUTH_URL` - Your production domain (e.g., https://jbinverters.com)
+   - `DATABASE_URL` - Your production database URL
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` - Email configuration
+   - `ADMIN_EMAIL` - Admin email address
+   - `VENMO_USERNAME` - Your Venmo username
+
+### Deployment Options
+
+#### Option 1: Vercel (Recommended)
+1. Connect your GitHub repository to Vercel
+2. Vercel will automatically deploy on every push to main
+3. Set environment variables in Vercel dashboard
+4. Your site will be available at `https://your-app.vercel.app`
+
+#### Option 2: Netlify
+1. Connect your GitHub repository to Netlify
+2. Set build command: `npm run build`
+3. Set publish directory: `.next`
+4. Configure environment variables in Netlify dashboard
+
+#### Option 3: Self-hosted Server
 1. Build the application:
-```bash
-npm run build
-```
+   ```bash
+   npm run build
+   ```
 
 2. Start the production server:
-```bash
-npm start
-```
+   ```bash
+   npm start
+   ```
 
 3. Set up a reverse proxy (nginx) if needed
 4. Configure SSL certificates
@@ -168,7 +204,7 @@ npm start
 ### Environment Variables for Production
 
 Make sure to set these in production:
-- `NEXTAUTH_SECRET` - Random secret key
+- `NEXTAUTH_SECRET` - Random secret key (use `openssl rand -base64 32`)
 - `NEXTAUTH_URL` - Your domain URL
 - `DATABASE_URL` - Production database URL
 - Email configuration if using contact form
