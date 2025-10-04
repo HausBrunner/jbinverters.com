@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import { useCart } from '@/contexts/CartContext'
 import { Mail, Phone, MapPin, Send } from 'lucide-react'
+import Captcha from '@/components/Captcha'
 
 export default function ContactPage() {
   const { getTotalItems } = useCart()
@@ -15,9 +16,17 @@ export default function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [captchaVerified, setCaptchaVerified] = useState(false)
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({})
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate form before proceeding
+    if (!validateForm()) {
+      return
+    }
+    
     setIsSubmitting(true)
     setSubmitStatus('idle')
 
@@ -49,6 +58,44 @@ export default function ContactPage() {
       ...prev,
       [e.target.name]: e.target.value
     }))
+    
+    // Clear field-specific errors when user starts typing
+    if (formErrors[e.target.name]) {
+      setFormErrors(prev => ({ ...prev, [e.target.name]: '' }))
+    }
+  }
+
+  const handleCaptchaVerify = (isValid: boolean) => {
+    setCaptchaVerified(isValid)
+    // Clear captcha error when verified
+    if (isValid && formErrors.captcha) {
+      setFormErrors(prev => ({ ...prev, captcha: '' }))
+    }
+  }
+
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {}
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required'
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address'
+    }
+    
+    if (!formData.message.trim()) {
+      errors.message = 'Message is required'
+    }
+    
+    if (!captchaVerified) {
+      errors.captcha = 'Please complete the security verification'
+    }
+    
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   return (
@@ -160,9 +207,14 @@ export default function ContactPage() {
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      formErrors.name ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Your full name"
                   />
+                  {formErrors.name && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -176,9 +228,14 @@ export default function ContactPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      formErrors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="your.email@example.com"
                   />
+                  {formErrors.email && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>
+                  )}
                 </div>
 
                 <div>
@@ -192,9 +249,14 @@ export default function ContactPage() {
                     rows={6}
                     value={formData.message}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className={`w-full px-4 py-3 text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      formErrors.message ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Tell us how we can help you..."
                   />
+                  {formErrors.message && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.message}</p>
+                  )}
                 </div>
 
                 {submitStatus === 'success' && (
@@ -213,11 +275,17 @@ export default function ContactPage() {
                   </div>
                 )}
 
+                {/* CAPTCHA Section */}
+                <Captcha onVerify={handleCaptchaVerify} />
+                {formErrors.captcha && (
+                  <p className="text-red-500 text-sm mt-1">{formErrors.captcha}</p>
+                )}
+
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !captchaVerified}
                   className={`w-full flex items-center justify-center px-6 py-3 rounded-lg font-semibold transition-colors ${
-                    isSubmitting
+                    isSubmitting || !captchaVerified
                       ? 'bg-gray-400 text-white cursor-not-allowed'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
@@ -226,6 +294,11 @@ export default function ContactPage() {
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       <span>Sending...</span>
+                    </div>
+                  ) : !captchaVerified ? (
+                    <div className="flex items-center space-x-2">
+                      <Send className="w-5 h-5" />
+                      <span>Complete Verification to Send Message</span>
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">

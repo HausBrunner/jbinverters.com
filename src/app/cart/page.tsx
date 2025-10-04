@@ -7,6 +7,7 @@ import Footer from '@/components/Footer'
 import { useCart } from '@/contexts/CartContext'
 import { Minus, Plus, Trash2, CreditCard, QrCode } from 'lucide-react'
 import QRCodeGenerator from '@/components/QRCodeGenerator'
+import Captcha from '@/components/Captcha'
 
 export default function CartPage() {
   const { state, updateQuantity, removeItem, clearCart, getTotalPrice } = useCart()
@@ -20,12 +21,21 @@ export default function CartPage() {
   const [venmoQRData, setVenmoQRData] = useState('')
   const [orderCreated, setOrderCreated] = useState(false)
   const [createdOrder, setCreatedOrder] = useState<any>(null)
+  const [captchaVerified, setCaptchaVerified] = useState(false)
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeItem(id)
     } else {
       updateQuantity(id, newQuantity)
+    }
+  }
+
+  const handleCaptchaVerify = (isValid: boolean) => {
+    setCaptchaVerified(isValid)
+    // Clear captcha error when verified
+    if (isValid && formErrors.captcha) {
+      setFormErrors(prev => ({ ...prev, captcha: '' }))
     }
   }
 
@@ -51,6 +61,10 @@ export default function CartPage() {
       errors.customerPhone = 'Phone number is required'
     } else if (!/^[\d\s\-\+\(\)]+$/.test(customerPhone)) {
       errors.customerPhone = 'Please enter a valid phone number'
+    }
+    
+    if (!captchaVerified) {
+      errors.captcha = 'Please complete the security verification'
     }
     
     setFormErrors(errors)
@@ -413,11 +427,17 @@ export default function CartPage() {
                       </div>
                     </div>
                     
+                    {/* CAPTCHA Section */}
+                    <Captcha onVerify={handleCaptchaVerify} />
+                    {formErrors.captcha && (
+                      <p className="text-red-500 text-xs mt-1">{formErrors.captcha}</p>
+                    )}
+                    
                     <button
                       onClick={handleCreateOrder}
-                      disabled={isCheckingOut}
+                      disabled={isCheckingOut || !captchaVerified}
                       className={`w-full flex items-center justify-center px-4 py-2 text-sm rounded-lg font-semibold transition-colors ${
-                        isCheckingOut
+                        isCheckingOut || !captchaVerified
                           ? 'bg-gray-400 text-white cursor-not-allowed'
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
@@ -426,6 +446,11 @@ export default function CartPage() {
                         <div className="flex items-center space-x-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           <span>Creating...</span>
+                        </div>
+                      ) : !captchaVerified ? (
+                        <div className="flex items-center space-x-2">
+                          <CreditCard className="w-4 h-4" />
+                          <span>Complete Verification to Create Order</span>
                         </div>
                       ) : (
                         <div className="flex items-center space-x-2">
