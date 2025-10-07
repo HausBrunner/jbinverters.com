@@ -178,11 +178,8 @@ export default function MailInServicePage() {
             </h3>
             <div className="bg-gray-100 rounded-lg p-4 mb-6">
               <p className="font-semibold text-gray-900">JB Inverters</p>
-              <p className="font-semibold text-gray-900">123 Repair Lane</p>
-              <p className="font-semibold text-gray-900">Service City, SC 12345</p>
-              <p className="text-sm text-gray-700 mt-2">
-                Please include "Mail-In Service" in the package description
-              </p>
+              <p className="font-semibold text-gray-900">5330 W Palmer Dr</p>
+              <p className="font-semibold text-gray-900">Banning, CA 92220</p>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">

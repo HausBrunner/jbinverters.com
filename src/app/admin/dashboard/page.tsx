@@ -21,13 +21,16 @@ import {
   Mail,
   MailOpen,
   Trash2,
-  Reply
+  Reply,
+  Lock
 } from 'lucide-react'
 import AddProductModal from '@/components/AddProductModal'
 import EditProductModal from '@/components/EditProductModal'
 import OrderStatusDropdown from '@/components/OrderStatusDropdown'
 import SerialNumberModal from '@/components/SerialNumberModal'
 import AssignSerialNumbersModal from '@/components/AssignSerialNumbersModal'
+import ChangePasswordModal from '@/components/ChangePasswordModal'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 interface Product {
   id: string
@@ -113,6 +116,7 @@ export default function AdminDashboard() {
   const [orderNotes, setOrderNotes] = useState('')
   const [replyingToMessage, setReplyingToMessage] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -339,7 +343,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-100" data-autofill="disabled">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -417,6 +422,7 @@ export default function AdminDashboard() {
             <nav className="-mb-px flex space-x-8 px-6">
               {[
                 { id: 'overview', name: 'Overview', icon: Eye },
+                { id: 'settings', name: 'Settings', icon: Users },
                 { id: 'products', name: 'Products', icon: Package },
                 { id: 'orders', name: 'Orders', icon: ShoppingCart },
                 { id: 'messages', name: 'Messages', icon: MessageSquare },
@@ -885,6 +891,73 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'settings' && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Account Settings</h2>
+                
+                <div className="space-y-6">
+                  {/* Password Change Section */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Lock className="w-5 h-5 text-gray-600" />
+                      <h3 className="text-lg font-medium text-gray-900">Change Password</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Update your admin password to keep your account secure.
+                    </p>
+                    <button
+                      onClick={() => setIsChangePasswordModalOpen(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Change Password
+                    </button>
+                  </div>
+
+                  {/* Account Information Section */}
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Users className="w-5 h-5 text-gray-600" />
+                      <h3 className="text-lg font-medium text-gray-900">Account Information</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                        <p className="mt-1 text-sm text-gray-900">{session?.user?.email}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Account Type</label>
+                        <p className="mt-1 text-sm text-gray-900">Administrator</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Security Tips */}
+                  <div className="bg-blue-50 rounded-lg p-6">
+                    <h3 className="text-lg font-medium text-blue-900 mb-3">Security Tips</h3>
+                    <ul className="space-y-2 text-sm text-blue-800">
+                      <li className="flex items-start">
+                        <span className="text-blue-600 mr-2">•</span>
+                        Use a strong, unique password with at least 8 characters
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-blue-600 mr-2">•</span>
+                        Include a mix of uppercase, lowercase, numbers, and symbols
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-blue-600 mr-2">•</span>
+                        Change your password regularly
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-blue-600 mr-2">•</span>
+                        Never share your admin credentials with others
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -932,6 +1005,13 @@ export default function AdminDashboard() {
         quantity={selectedOrder?.quantity || 0}
         onSerialNumbersAssigned={fetchData}
       />
-    </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+      />
+      </div>
+    </ErrorBoundary>
   )
 }
