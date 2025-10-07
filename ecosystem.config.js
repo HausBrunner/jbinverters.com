@@ -3,7 +3,7 @@ module.exports = {
     name: 'jbinverters',
     script: 'npm',
     args: 'start',
-    cwd: '/home/jason/webdev/jbinverters', // Update this path for your server
+    cwd: '/home/jason/jbinverters', // Update this path for your server
     instances: 1,
     autorestart: true,
     watch: false,
