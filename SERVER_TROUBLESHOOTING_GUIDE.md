@@ -1,6 +1,6 @@
 # Server Troubleshooting Guide for JBInverters
 
-## Problem: Server Keeps Crashing on Port 3000
+## Problem 1: Server Keeps Crashing on Port 3000
 
 ### Root Cause
 The server was experiencing a crash loop because PM2 was configured to run in production mode (`npm start`) instead of development mode with nodemon (`npm run dev:nodemon`).
@@ -10,6 +10,20 @@ The server was experiencing a crash loop because PM2 was configured to run in pr
 - PM2 shows high restart count (↺ 453 restarts)
 - Error logs only show timestamps without actual error messages
 - Output logs show repeated `> jbinverters@0.1.0 start` attempts
+
+## Problem 2: File Changes Not Updating / Hot Reload Not Working
+
+### Root Cause
+Multiple issues can prevent hot reload from working:
+1. **Nodemon conflict with PM2** - nodemon's file watching doesn't work properly when run inside PM2
+2. **Port conflicts** - leftover processes occupying port 3000
+3. **Browser caching** - cached content preventing changes from showing
+
+### Symptoms
+- File changes don't appear in browser
+- Server doesn't restart when files are modified
+- Next.js switches to different ports (3001, 3002, etc.)
+- Browser shows old content even after changes
 
 ### Solution Applied
 
@@ -25,7 +39,8 @@ env: {
 
 **After:**
 ```javascript
-args: 'run dev:nodemon',
+args: 'run dev',
+watch: false,  // Let Next.js handle file watching
 env: {
   NODE_ENV: 'development',
   PORT: 3000
@@ -44,6 +59,28 @@ experimental: {
 ```typescript
 serverExternalPackages: [],
 ```
+
+#### 3. Resolved Port Conflicts
+**Problem:** Leftover `next-server` processes occupying port 3000
+**Solution:**
+```bash
+# Find process using port 3000
+lsof -i :3000
+netstat -tlnp | grep :3000
+
+# Kill the specific process
+kill -9 <PID>
+
+# Or force kill all processes on port 3000
+sudo fuser -k 3000/tcp
+```
+
+#### 4. Fixed File Watching Issues
+**Problem:** Nodemon file watching conflicts with PM2
+**Solution:** Use Next.js built-in hot reload instead:
+- Set `watch: false` in PM2 config
+- Let Next.js handle file watching with Turbopack
+- Run development server directly: `npm run dev`
 
 ## How to Resolve Similar Issues Yourself
 
@@ -106,19 +143,44 @@ pm2 status
 
 ## Common Issues and Solutions
 
-### 1. Port Already in Use
+### 1. Port Already in Use / Next.js Switching Ports
 ```bash
 # Find process using port 3000
 lsof -i :3000
+netstat -tlnp | grep :3000
 
-# Kill process by PID
+# Kill specific process by PID
 kill -9 <PID>
 
-# Or kill all node processes (use with caution)
+# Or force kill all processes on port 3000
+sudo fuser -k 3000/tcp
+
+# Kill all PM2 processes first
+pm2 kill
+
+# Then kill any remaining node processes (use with caution)
 pkill -f node
 ```
 
-### 2. PM2 Process Not Starting
+### 2. File Changes Not Updating / Hot Reload Issues
+```bash
+# Check if server is actually running
+curl -I http://localhost:3000
+
+# Check for port conflicts
+lsof -i :3000
+
+# Try incognito/private browsing to bypass cache
+# Or hard refresh (Ctrl+Shift+R / Cmd+Shift+R)
+
+# If using PM2, check logs for restart loops
+pm2 logs jbinverters --lines 20
+
+# For development, consider running directly instead of PM2
+npm run dev
+```
+
+### 3. PM2 Process Not Starting
 ```bash
 # Check PM2 logs
 pm2 logs jbinverters
@@ -131,7 +193,7 @@ pm2 kill
 pm2 start ecosystem.config.js
 ```
 
-### 3. Next.js Build Errors
+### 4. Next.js Build Errors
 ```bash
 # Clear Next.js cache
 rm -rf .next
@@ -144,7 +206,7 @@ npm install
 npm run build
 ```
 
-### 4. Database Connection Issues
+### 5. Database Connection Issues
 ```bash
 # Check if database exists
 ls -la prisma/
@@ -156,7 +218,7 @@ npx prisma migrate dev
 npx prisma generate
 ```
 
-### 5. Environment Variables Missing
+### 6. Environment Variables Missing
 ```bash
 # Check environment files
 ls -la .env*
@@ -256,7 +318,8 @@ pm2 status                       # Show status
 pm2 logs jbinverters             # Show logs
 
 # Development
-npm run dev:nodemon              # Start with nodemon
+npm run dev                      # Start development server (recommended)
+npm run dev:nodemon              # Start with nodemon (if needed)
 npm run build                    # Build for production
 npm start                        # Start production build
 
@@ -269,5 +332,29 @@ npx prisma db seed               # Seed database
 ---
 
 **Last Updated:** October 8, 2025  
-**Issue Fixed:** Server crash loop due to incorrect PM2 configuration  
+**Issues Fixed:** 
+- Server crash loop due to incorrect PM2 configuration  
+- File watching/hot reload issues with nodemon + PM2 conflicts
+- Port conflicts preventing proper development server startup
 **Status:** ✅ Resolved
+
+## Recent Issues Resolved (October 8, 2025)
+
+### Issue: Development Server Not Reflecting File Changes
+**Symptoms:**
+- File changes not appearing in browser
+- Next.js switching to ports 3001, 3002 instead of 3000
+- PM2 logs showing crash loops with repeated restarts
+
+**Root Causes:**
+1. Leftover `next-server` process occupying port 3000
+2. Nodemon file watching conflicts with PM2
+3. Browser caching preventing change visibility
+
+**Final Solution:**
+- Killed leftover processes: `sudo fuser -k 3000/tcp`
+- Switched to direct Next.js development: `npm run dev`
+- Let Next.js Turbopack handle file watching instead of nodemon
+- Used incognito mode to bypass browser cache during testing
+
+**Result:** ✅ Development server now running on port 3000 with proper hot reload

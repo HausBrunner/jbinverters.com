@@ -2,11 +2,11 @@ module.exports = {
   apps: [{
     name: 'jbinverters',
     script: 'npm',
-    args: 'run dev:nodemon',
-    cwd: '/home/jason/jbinverters', // Update this path for your server
+    args: 'run dev',
+    cwd: '/home/jason/jbinverters',
     instances: 1,
     autorestart: true,
-    watch: false,
+    watch: false,  // Let Next.js handle file watching
     max_memory_restart: '1G',
     env: {
       NODE_ENV: 'development',
