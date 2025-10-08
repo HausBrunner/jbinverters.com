@@ -84,11 +84,12 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {allProducts.map((product) => (
+              {allProducts.map((product, index) => (
                 <ProductCard 
                   key={product.id} 
                   product={product} 
                   onMailInClick={product.id === 'mail-in-service' ? handleMailInClick : undefined}
+                  isPriority={index < 3} // Priority for first 3 images (above the fold)
                 />
               ))}
             </div>

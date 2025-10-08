@@ -6,8 +6,6 @@ import { useRouter } from 'next/navigation'
 import { 
   Package, 
   ShoppingCart, 
-  Users, 
-  MessageSquare, 
   Plus,
   Edit,
   LogOut,
@@ -18,18 +16,13 @@ import {
   Archive,
   ArchiveRestore,
   StickyNote,
-  Mail,
-  MailOpen,
-  Trash2,
-  Reply,
-  Lock
+  Trash2
 } from 'lucide-react'
 import AddProductModal from '@/components/AddProductModal'
 import EditProductModal from '@/components/EditProductModal'
 import OrderStatusDropdown from '@/components/OrderStatusDropdown'
 import SerialNumberModal from '@/components/SerialNumberModal'
 import AssignSerialNumbersModal from '@/components/AssignSerialNumbersModal'
-import ChangePasswordModal from '@/components/ChangePasswordModal'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
 interface Product {
@@ -78,14 +71,6 @@ interface Order {
   }[]
 }
 
-interface ContactMessage {
-  id: string
-  name: string
-  email: string
-  message: string
-  isRead: boolean
-  createdAt: string
-}
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -93,7 +78,6 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const [products, setProducts] = useState<Product[]>([])
   const [orders, setOrders] = useState<Order[]>([])
-  const [messages, setMessages] = useState<ContactMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false)
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false)
@@ -114,9 +98,6 @@ export default function AdminDashboard() {
   const [showArchived, setShowArchived] = useState(false)
   const [editingOrderNotes, setEditingOrderNotes] = useState<string | null>(null)
   const [orderNotes, setOrderNotes] = useState('')
-  const [replyingToMessage, setReplyingToMessage] = useState<string | null>(null)
-  const [replyText, setReplyText] = useState('')
-  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -143,10 +124,9 @@ export default function AdminDashboard() {
       if (orderSortOrder) ordersParams.append('sortOrder', orderSortOrder)
       ordersParams.append('archived', showArchived.toString())
 
-      const [productsRes, ordersRes, messagesRes] = await Promise.all([
+      const [productsRes, ordersRes] = await Promise.all([
         fetch('/api/admin/products'),
-        fetch(`/api/admin/orders?${ordersParams.toString()}`),
-        fetch('/api/admin/messages')
+        fetch(`/api/admin/orders?${ordersParams.toString()}`)
       ])
 
       if (productsRes.ok) {
@@ -157,11 +137,6 @@ export default function AdminDashboard() {
       if (ordersRes.ok) {
         const ordersData = await ordersRes.json()
         setOrders(ordersData)
-      }
-
-      if (messagesRes.ok) {
-        const messagesData = await messagesRes.json()
-        setMessages(messagesData)
       }
     } catch (error) {
       console.error('Error fetching admin data:', error)
@@ -242,62 +217,6 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleMarkMessageRead = async (messageId: string, isRead: boolean) => {
-    try {
-      const response = await fetch(`/api/admin/messages/${messageId}/read`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isRead })
-      })
-
-      if (response.ok) {
-        fetchData()
-      } else {
-        alert('Failed to update message status')
-      }
-    } catch (error) {
-      alert('Error updating message status')
-    }
-  }
-
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('Are you sure you want to delete this message?')) return
-
-    try {
-      const response = await fetch(`/api/admin/messages/${messageId}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
-        fetchData()
-      } else {
-        alert('Failed to delete message')
-      }
-    } catch (error) {
-      alert('Error deleting message')
-    }
-  }
-
-  const handleReplyToMessage = async (messageId: string) => {
-    try {
-      const response = await fetch(`/api/admin/messages/${messageId}/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ replyMessage: replyText })
-      })
-
-      if (response.ok) {
-        setReplyingToMessage(null)
-        setReplyText('')
-        fetchData()
-        alert('Reply sent successfully!')
-      } else {
-        alert('Failed to send reply')
-      }
-    } catch (error) {
-      alert('Error sending reply')
-    }
-  }
 
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return
@@ -338,8 +257,7 @@ export default function AdminDashboard() {
   const stats = {
     totalProducts: products.length,
     totalOrders: orders.length,
-    totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
-    unreadMessages: messages.filter(msg => !msg.isRead).length
+    totalRevenue: orders.reduce((sum, order) => sum + order.total, 0)
   }
 
   return (
@@ -366,7 +284,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -394,23 +312,11 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Users className="w-8 h-8 text-purple-600" />
+                <ShoppingCart className="w-8 h-8 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
                 <p className="text-2xl font-semibold text-gray-900">${stats.totalRevenue.toFixed(2)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <MessageSquare className="w-8 h-8 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Unread Messages</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats.unreadMessages}</p>
               </div>
             </div>
           </div>
@@ -422,10 +328,8 @@ export default function AdminDashboard() {
             <nav className="-mb-px flex space-x-8 px-6">
               {[
                 { id: 'overview', name: 'Overview', icon: Eye },
-                { id: 'settings', name: 'Settings', icon: Users },
                 { id: 'products', name: 'Products', icon: Package },
                 { id: 'orders', name: 'Orders', icon: ShoppingCart },
-                { id: 'messages', name: 'Messages', icon: MessageSquare },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -448,43 +352,21 @@ export default function AdminDashboard() {
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Orders</h3>
-                    <div className="space-y-3">
-                      {orders.slice(0, 5).map((order) => (
-                        <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-900">{order.orderNumber}</p>
-                            <p className="text-sm text-gray-500">{order.customerName || 'Guest'}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900">${order.total.toFixed(2)}</p>
-                            <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
-                          </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Orders</h3>
+                  <div className="space-y-3">
+                    {orders.slice(0, 5).map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-gray-900">{order.orderNumber}</p>
+                          <p className="text-sm text-gray-500">{order.customerName || 'Guest'}</p>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Messages</h3>
-                    <div className="space-y-3">
-                      {messages.slice(0, 5).map((message) => (
-                        <div key={message.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-900">{message.name}</p>
-                            <p className="text-sm text-gray-500 truncate">{message.message}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-gray-500">{new Date(message.createdAt).toLocaleDateString()}</p>
-                            {!message.isRead && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full ml-auto mt-1"></div>
-                            )}
-                          </div>
+                        <div className="text-right">
+                          <p className="font-medium text-gray-900">${order.total.toFixed(2)}</p>
+                          <p className="text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -797,167 +679,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {activeTab === 'messages' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Contact Messages</h2>
-                
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div key={message.id} className={`border rounded-lg p-4 ${!message.isRead ? 'border-blue-200 bg-blue-50' : 'border-gray-200'}`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-medium text-gray-900">{message.name}</h3>
-                          <p className="text-sm text-gray-600">{message.email}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">{new Date(message.createdAt).toLocaleDateString()}</p>
-                          {!message.isRead && (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                              New
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-gray-700 mb-4">{message.message}</p>
-                      
-                      {/* Action Buttons */}
-                      <div className="flex items-center space-x-2 pt-2 border-t border-gray-200">
-                        <button
-                          onClick={() => handleMarkMessageRead(message.id, !message.isRead)}
-                          className={`flex items-center space-x-1 px-3 py-1 text-xs rounded-lg ${
-                            message.isRead 
-                              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          }`}
-                        >
-                          {message.isRead ? <Mail className="w-3 h-3" /> : <MailOpen className="w-3 h-3" />}
-                          <span>{message.isRead ? 'Mark Unread' : 'Mark Read'}</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => setReplyingToMessage(replyingToMessage === message.id ? null : message.id)}
-                          className="flex items-center space-x-1 px-3 py-1 text-xs rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
-                        >
-                          <Reply className="w-3 h-3" />
-                          <span>Reply</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => handleDeleteMessage(message.id)}
-                          className="flex items-center space-x-1 px-3 py-1 text-xs rounded-lg bg-red-100 text-red-700 hover:bg-red-200"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          <span>Delete</span>
-                        </button>
-                      </div>
 
-                      {/* Reply Section */}
-                      {replyingToMessage === message.id && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
-                          <div className="mb-3">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Reply to {message.email}:
-                            </label>
-                            <textarea
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                              rows={4}
-                              placeholder="Type your reply here..."
-                            />
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleReplyToMessage(message.id)}
-                              disabled={!replyText.trim()}
-                              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              Send Reply
-                            </button>
-                            <button
-                              onClick={() => {
-                                setReplyingToMessage(null)
-                                setReplyText('')
-                              }}
-                              className="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-400"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'settings' && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Account Settings</h2>
-                
-                <div className="space-y-6">
-                  {/* Password Change Section */}
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <Lock className="w-5 h-5 text-gray-600" />
-                      <h3 className="text-lg font-medium text-gray-900">Change Password</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Update your admin password to keep your account secure.
-                    </p>
-                    <button
-                      onClick={() => setIsChangePasswordModalOpen(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      <Lock className="w-4 h-4 mr-2" />
-                      Change Password
-                    </button>
-                  </div>
-
-                  {/* Account Information Section */}
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <Users className="w-5 h-5 text-gray-600" />
-                      <h3 className="text-lg font-medium text-gray-900">Account Information</h3>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                        <p className="mt-1 text-sm text-gray-900">{session?.user?.email}</p>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Account Type</label>
-                        <p className="mt-1 text-sm text-gray-900">Administrator</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Security Tips */}
-                  <div className="bg-blue-50 rounded-lg p-6">
-                    <h3 className="text-lg font-medium text-blue-900 mb-3">Security Tips</h3>
-                    <ul className="space-y-2 text-sm text-blue-800">
-                      <li className="flex items-start">
-                        <span className="text-blue-600 mr-2">•</span>
-                        Use a strong, unique password with at least 8 characters
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-blue-600 mr-2">•</span>
-                        Include a mix of uppercase, lowercase, numbers, and symbols
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-blue-600 mr-2">•</span>
-                        Change your password regularly
-                      </li>
-                      <li className="flex items-start">
-                        <span className="text-blue-600 mr-2">•</span>
-                        Never share your admin credentials with others
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -1006,11 +728,6 @@ export default function AdminDashboard() {
         onSerialNumbersAssigned={fetchData}
       />
 
-      {/* Change Password Modal */}
-      <ChangePasswordModal
-        isOpen={isChangePasswordModalOpen}
-        onClose={() => setIsChangePasswordModalOpen(false)}
-      />
       </div>
     </ErrorBoundary>
   )

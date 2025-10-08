@@ -54,6 +54,19 @@ export default function EditProductModal({ isOpen, onClose, onProductUpdated, pr
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file (JPG, PNG, GIF, etc.)')
+        return
+      }
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Image file must be less than 10MB')
+        return
+      }
+
+      setError('') // Clear any previous errors
       setImageFile(file)
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -86,7 +99,8 @@ export default function EditProductModal({ isOpen, onClose, onProductUpdated, pr
           const uploadData = await uploadResponse.json()
           imageUrl = uploadData.imageUrl
         } else {
-          throw new Error('Failed to upload image')
+          const errorData = await uploadResponse.json()
+          throw new Error(errorData.error || 'Failed to upload image')
         }
       }
 
@@ -112,7 +126,8 @@ export default function EditProductModal({ isOpen, onClose, onProductUpdated, pr
       onProductUpdated()
       onClose()
     } catch (error) {
-      setError('Failed to update product. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update product. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

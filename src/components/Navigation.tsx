@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect, useRef } from 'react'
-import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+import { ShoppingCart, Menu, X } from 'lucide-react'
 
 interface NavigationProps {
   cartCount?: number
@@ -10,31 +10,15 @@ interface NavigationProps {
 
 export default function Navigation({ cartCount = 0 }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isPoliciesOpen, setIsPoliciesOpen] = useState(false)
-  const policiesRef = useRef<HTMLDivElement>(null)
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (policiesRef.current && !policiesRef.current.contains(event.target as Node)) {
-        setIsPoliciesOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
 
   return (
     <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-48">
+        <div className="flex justify-between h-36">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
               <div className="flex items-center space-x-2">
-                <img src="/images/jblogo.png" alt="JB Inverters" className="h-48" />
+                <img src="/images/jblogo.png" alt="JB Inverters" className="h-36" />
               </div>
             </Link>
           </div>
@@ -48,52 +32,11 @@ export default function Navigation({ cartCount = 0 }: NavigationProps) {
               Home
             </Link>
             <Link
-              href="/mail-in-service"
-              className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
-            >
-              Mail-In Service
-            </Link>
-            <Link
               href="/contact"
               className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
             >
               Contact
             </Link>
-            <div className="relative" ref={policiesRef}>
-              <button
-                onClick={() => setIsPoliciesOpen(!isPoliciesOpen)}
-                className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium flex items-center space-x-1"
-              >
-                <span>Policies</span>
-                <ChevronDown className="h-4 w-4" />
-              </button>
-              
-              {isPoliciesOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                  <Link
-                    href="/policies/shipping"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                    onClick={() => setIsPoliciesOpen(false)}
-                  >
-                    Shipping Policy
-                  </Link>
-                  <Link
-                    href="/policies/refunds"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                    onClick={() => setIsPoliciesOpen(false)}
-                  >
-                    Refund Policy
-                  </Link>
-                  <Link
-                    href="/policies/terms"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                    onClick={() => setIsPoliciesOpen(false)}
-                  >
-                    Terms & Conditions
-                  </Link>
-                </div>
-              )}
-            </div>
             <Link
               href="/cart"
               className="relative text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
@@ -138,7 +81,6 @@ export default function Navigation({ cartCount = 0 }: NavigationProps) {
                 className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium"
                 onClick={() => {
                   setIsMenuOpen(false)
-                  setIsPoliciesOpen(false)
                 }}
               >
                 Home
@@ -148,7 +90,6 @@ export default function Navigation({ cartCount = 0 }: NavigationProps) {
                 className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium"
                 onClick={() => {
                   setIsMenuOpen(false)
-                  setIsPoliciesOpen(false)
                 }}
               >
                 Mail-In Service
@@ -158,55 +99,10 @@ export default function Navigation({ cartCount = 0 }: NavigationProps) {
                 className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium"
                 onClick={() => {
                   setIsMenuOpen(false)
-                  setIsPoliciesOpen(false)
                 }}
               >
                 Contact
               </Link>
-              <div>
-                <button
-                  onClick={() => setIsPoliciesOpen(!isPoliciesOpen)}
-                  className="text-gray-700 hover:text-gray-900 block px-3 py-2 text-base font-medium flex items-center justify-between w-full"
-                >
-                  <span>Policies</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isPoliciesOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isPoliciesOpen && (
-                  <div className="pl-4 space-y-1">
-                    <Link
-                      href="/policies/shipping"
-                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium"
-                      onClick={() => {
-                        setIsMenuOpen(false)
-                        setIsPoliciesOpen(false)
-                      }}
-                    >
-                      Shipping Policy
-                    </Link>
-                    <Link
-                      href="/policies/refunds"
-                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium"
-                      onClick={() => {
-                        setIsMenuOpen(false)
-                        setIsPoliciesOpen(false)
-                      }}
-                    >
-                      Refund Policy
-                    </Link>
-                    <Link
-                      href="/policies/terms"
-                      className="text-gray-600 hover:text-gray-900 block px-3 py-2 text-sm font-medium"
-                      onClick={() => {
-                        setIsMenuOpen(false)
-                        setIsPoliciesOpen(false)
-                      }}
-                    >
-                      Terms & Conditions
-                    </Link>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}

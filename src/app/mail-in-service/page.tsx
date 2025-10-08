@@ -50,10 +50,11 @@ export default function MailInServicePage() {
       <Navigation cartCount={getTotalItems()} />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-900 to-blue-800 text-white py-8">
+      <section className="bg-gradient-to-br from-blue-900 to-blue-800 text-white py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <p className="text-xl text-blue-200 max-w-3xl mx-auto">
+            <h1 className="text-2xl font-bold mb-3">Mail-In Repair Service</h1>
+            <p className="text-lg text-blue-200 max-w-2xl mx-auto">
               Professional repair service for your inverter or power equipment. 
               Send us your device and we'll diagnose and repair it with expert care.
             </p>
@@ -62,26 +63,27 @@ export default function MailInServicePage() {
       </section>
 
       {/* Service Details */}
-      <section className="py-16 bg-white">
+      <section className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* How It Works */}
+            <div className="lg:col-span-2">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 How Our Mail-In Service Works
               </h2>
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {steps.map((step, index) => (
-                  <div key={index} className="flex items-start space-x-4">
+                  <div key={index} className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <step.icon className="w-6 h-6 text-blue-600" />
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <step.icon className="w-5 h-5 text-blue-600" />
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-base font-semibold text-gray-900 mb-1">
                         {step.title}
                       </h3>
-                      <p className="text-gray-700">
+                      <p className="text-sm text-gray-700">
                         {step.description}
                       </p>
                     </div>
@@ -90,22 +92,23 @@ export default function MailInServicePage() {
               </div>
             </div>
             
-            <div className="bg-gray-50 rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
+            {/* Service Details & Order */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">
                 Service Details
               </h3>
-              <div className="space-y-4 mb-6">
+              <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-700">Service Fee:</span>
                   <span className="font-semibold text-gray-700">$89.99</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-700">Diagnosis Time:</span>
-                  <span className="font-semibold text-gray-700">2-3 business days</span>
+                  <span className="text-gray-700">Diagnosis:</span>
+                  <span className="font-semibold text-gray-700">2-3 days</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-700">Repair Time:</span>
-                  <span className="font-semibold text-gray-700">5-7 business days</span>
+                  <span className="text-gray-700">Repair:</span>
+                  <span className="font-semibold text-gray-700">5-7 days</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">Warranty:</span>
@@ -125,7 +128,7 @@ export default function MailInServicePage() {
                 {isAdding ? (
                   <div className="flex items-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Adding to Cart...</span>
+                    <span>Adding...</span>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
@@ -139,57 +142,116 @@ export default function MailInServicePage() {
         </div>
       </section>
 
-      {/* Instructions Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Shipping Instructions
-          </h2>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Packaging Guidelines
-            </h3>
-            <ul className="space-y-3 text-gray-700 mb-8">
-              <li className="flex items-start space-x-2">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Use a sturdy cardboard box with adequate padding (bubble wrap, foam, or newspaper)</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Remove any loose cables or accessories and wrap them separately</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Include a detailed description of the problem you're experiencing</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Include your contact information (name, phone, email)</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-blue-600 mt-1">•</span>
-                <span>Consider purchasing shipping insurance for valuable equipment</span>
-              </li>
-            </ul>
+      {/* Shipping Instructions */}
+      <section className="py-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Shipping Instructions
+              </h2>
+              <div className="bg-white rounded-lg p-6">
+                <h3 className="font-semibold text-gray-900 mb-3">Packaging Guidelines</h3>
+                <ul className="space-y-2 text-sm text-gray-700 mb-6">
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Use sturdy box with adequate padding</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Remove loose cables and wrap separately</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Include detailed problem description</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Include your contact information</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Consider shipping insurance</span>
+                  </li>
+                </ul>
 
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Shipping Address
-            </h3>
-            <div className="bg-gray-100 rounded-lg p-4 mb-6">
-              <p className="font-semibold text-gray-900">JB Inverters</p>
-              <p className="font-semibold text-gray-900">5330 W Palmer Dr</p>
-              <p className="font-semibold text-gray-900">Banning, CA 92220</p>
+                <h3 className="font-semibold text-gray-900 mb-3">Shipping Address</h3>
+                <div className="bg-gray-100 rounded-lg p-3 mb-4">
+                  <p className="font-semibold text-gray-900">JB Inverters</p>
+                  <p className="font-semibold text-gray-900">5330 W Palmer Dr</p>
+                  <p className="font-semibold text-gray-900">Banning, CA 92220</p>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <h4 className="font-semibold text-yellow-800 mb-2 text-sm">Important:</h4>
+                  <ul className="text-xs text-yellow-700 space-y-1">
+                    <li>• Service fee covers diagnosis and basic repairs</li>
+                    <li>• Additional repairs quoted separately</li>
+                    <li>• We'll contact before additional charges</li>
+                    <li>• Return shipping included</li>
+                  </ul>
+                </div>
+              </div>
             </div>
+            
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                90-Day Warranty
+              </h2>
+              <div className="bg-white rounded-lg p-6">
+                <p className="text-sm text-gray-700 mb-4">
+                  All mail-in repair services come with a comprehensive 90-day parts and labor warranty.
+                </p>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h4 className="font-semibold text-yellow-800 mb-2">Important Notes:</h4>
-              <ul className="text-sm text-yellow-700 space-y-1">
-                <li>• The $89.99 service fee covers diagnosis and basic repairs</li>
-                <li>• Additional parts or complex repairs will be quoted separately</li>
-                <li>• We'll contact you before proceeding with any additional charges</li>
-                <li>• Return shipping is included in the service fee</li>
-              </ul>
+                <div className="grid grid-cols-1 gap-4 mb-6">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2 text-sm">What's Covered</h3>
+                    <ul className="space-y-1 text-xs text-gray-700">
+                      <li className="flex items-start space-x-2">
+                        <span className="text-green-600 mt-1">✓</span>
+                        <span>Manufacturing defects & premature failure</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-green-600 mt-1">✓</span>
+                        <span>Technician error & repair work failure</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-green-600 mt-1">✓</span>
+                        <span>Parts & labor costs for warranty repairs</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-2 text-sm">Not Covered</h3>
+                    <ul className="space-y-1 text-xs text-gray-700">
+                      <li className="flex items-start space-x-2">
+                        <span className="text-red-600 mt-1">✗</span>
+                        <span>Misuse, abuse, or neglect damage</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-red-600 mt-1">✗</span>
+                        <span>Accidents, natural disasters, wear & tear</span>
+                      </li>
+                      <li className="flex items-start space-x-2">
+                        <span className="text-red-600 mt-1">✗</span>
+                        <span>Unauthorized modifications</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <h4 className="font-semibold text-blue-800 mb-2 text-sm">Warranty Process:</h4>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    <li>• Contact us within 90 days with your order number</li>
+                    <li>• We'll determine if issue is covered</li>
+                    <li>• Free repair if covered under warranty</li>
+                    <li>• Response within 24-48 hours</li>
+                    <li>• All shipping costs covered by us</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>

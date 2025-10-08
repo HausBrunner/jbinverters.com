@@ -18,9 +18,10 @@ interface Product {
 interface ProductCardProps {
   product: Product
   onMailInClick?: () => void
+  isPriority?: boolean
 }
 
-export default function ProductCard({ product, onMailInClick }: ProductCardProps) {
+export default function ProductCard({ product, onMailInClick, isPriority = false }: ProductCardProps) {
   const { addItem } = useCart()
   const [isAdding, setIsAdding] = useState(false)
 
@@ -54,6 +55,7 @@ export default function ProductCard({ product, onMailInClick }: ProductCardProps
             width={400}
             height={300}
             className="w-full h-52 object-cover"
+            priority={isPriority}
           />
         ) : (
           <div className="w-full h-48 bg-white flex items-center justify-center">
