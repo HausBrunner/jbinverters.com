@@ -27,19 +27,19 @@ export default function Navigation({ cartCount = 0 }: NavigationProps) {
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
-              className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              className="text-gray-700 hover:text-gray-900 px-3 py-2 text-md font-medium"
             >
               Home
             </Link>
             <Link
               href="/contact"
-              className="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              className="text-gray-700 hover:text-gray-900 px-3 py-2 text-md font-medium"
             >
               Contact
             </Link>
             <Link
               href="/cart"
-              className="relative text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+              className="relative text-gray-700 hover:text-gray-900 px-3 py-2 text-md font-medium"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (

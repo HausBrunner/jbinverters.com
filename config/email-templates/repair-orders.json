@@ -1,0 +1,44 @@
+{
+  "orderType": "repair",
+  "description": "Email templates for repair service orders (mail-in service)",
+  "initialConfirmation": {
+    "subject": "Order Received - Order #[orderNumber] - JB Inverters",
+    "content": "Hello [customerName],\n\nThank you for your order! Your order has been received.\n\nOrder Placed: [orderDate]\nOrder Number: [orderNumber]\nItems Ordered: \n[itemsList]\nOrder Total: $[total]\n\n**Next Steps for Mail-in Repair Service:**\n1. Once payment is confirmed, we'll send detailed shipping instructions\n2. Package your device safely and ship it to us\n3. We'll diagnose and provide a repair quote within 2-3 business days\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim",
+    "fromEmail": "jbinverters@gmail.com"
+  },
+  "statusUpdates": {
+    "ORDER_RECEIVED": {
+      "subject": "Order Received - Order #[orderNumber] - JB Inverters",
+      "message": "Hello [customerName],\n\nThank you for your order! Your order has been received.\n\nOrder Placed: [orderDate]\nOrder Number: [orderNumber]\nItems Ordered: \n[itemsList]\nOrder Total: $[total]\n\n**Next Steps for Mail-in Repair Service:**\n1. Once payment is confirmed, we'll send detailed shipping instructions\n2. Package your device safely and ship it to us\n3. We'll diagnose and provide a repair quote within 2-3 business days\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "PAID": {
+      "subject": "Payment Received - Order #[orderNumber] - JB Inverters",
+      "message": "Thank you! We have received your payment.  Please see below for shipping instructions.\n\nPackaging Guidelines:\n\n• Use sturdy box with adequate padding\n• Remove loose cables and wrap separately\n• Include detailed problem description\n• Include your contact information\n• Consider shipping insurance\n\nShipping Address:\n\nJB Inverters\n5330 W Palmer Dr\nBanning, CA 92220\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "RECEIVED": {
+      "subject": "Package Received - Order #[orderNumber] - JB Inverters",
+      "message": "We have received your package and will begin the diagnostic process shortly.\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "QUOTE_SENT": {
+      "subject": "Diagnostic Complete - Order #[orderNumber] - JB Inverters",
+      "message": "We have completed the diagnostics on your device.",
+      "messageWithQuote": "We have completed the diagnostics on your device. Please see below for your repair quote.\n\n[repairQuote]\n\nPlease review the quote and let us know if you'd like to proceed with the repair.\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim",
+      "quoteSection": "<div style=\"background-color: #e8f4fd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #2196F3;\"><h3 style=\"margin-top: 0; color: #1976D2;\">Repair Quote:</h3><div style=\"white-space: pre-line; font-family: monospace; background-color: white; padding: 10px; border-radius: 3px;\">[repairQuote]</div></div>"
+    },
+    "REPAIRING": {
+      "subject": "Repair in Progress - Order #[orderNumber] - JB Inverters",
+      "message": "Your repair is in progress.\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "SHIPPED_AND_COMPLETE": {
+      "subject": "Order Shipped - Order #[orderNumber] - JB Inverters",
+      "message": "Your order has been shipped!\n\nOrder Placed: [orderDate]\nOrder Number: [orderNumber]\nItems Ordered: [itemsList]\n\nShip to:\n\n[customerName]\n[customerAddress]\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "CANCELLED": {
+      "subject": "Order Cancelled - Order #[orderNumber] - JB Inverters",
+      "message": "Your order has been cancelled. If you have any questions, please contact us.\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    }
+  },
+  "htmlTemplate": {
+    "wrapper": "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\"><h2 style=\"color: #333;\">Order Status Update</h2><p>Dear [customerName],</p><p>[statusMessage]</p><div style=\"background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;\"><h3 style=\"margin-top: 0;\">Order Details:</h3><p><strong>Order Number:</strong> [orderNumber]</p><p><strong>Status:</strong> [statusLabel]</p><p><strong>Total:</strong> $[total]</p></div>[additionalContent]<p>If you have any questions, please don't hesitate to contact us.</p><p>Best regards,<br>JB Inverters Team</p></div>"
+  }
+}

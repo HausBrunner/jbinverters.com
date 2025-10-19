@@ -87,20 +87,40 @@ export default function EditProductModal({ isOpen, onClose, onProductUpdated, pr
       // If there's an image file, upload it first
       let imageUrl = formData.imageUrl
       if (imageFile) {
+        console.log('Starting image upload...')
         const uploadFormData = new FormData()
         uploadFormData.append('image', imageFile)
         
-        const uploadResponse = await fetch('/api/admin/upload', {
-          method: 'POST',
-          body: uploadFormData,
-        })
+        try {
+          // Add timeout to prevent hanging
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+          
+          const uploadResponse = await fetch('/api/admin/upload', {
+            method: 'POST',
+            body: uploadFormData,
+            signal: controller.signal,
+          })
+          
+          clearTimeout(timeoutId)
 
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json()
-          imageUrl = uploadData.imageUrl
-        } else {
-          const errorData = await uploadResponse.json()
-          throw new Error(errorData.error || 'Failed to upload image')
+          console.log('Upload response status:', uploadResponse.status)
+
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json()
+            imageUrl = uploadData.imageUrl
+            console.log('Upload successful:', imageUrl)
+          } else {
+            const errorData = await uploadResponse.json()
+            console.error('Upload failed:', errorData)
+            throw new Error(errorData.error || 'Failed to upload image')
+          }
+        } catch (uploadError) {
+          console.error('Upload error:', uploadError)
+          if (uploadError instanceof Error && uploadError.name === 'AbortError') {
+            throw new Error('Upload timed out. Please try again with a smaller image or check your connection.')
+          }
+          throw new Error(`Upload failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`)
         }
       }
 

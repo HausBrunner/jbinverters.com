@@ -6,7 +6,6 @@ import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import { useCart } from '@/contexts/CartContext'
 import { Minus, Plus, Trash2, CreditCard, QrCode } from 'lucide-react'
-import QRCodeGenerator from '@/components/QRCodeGenerator'
 import Captcha from '@/components/Captcha'
 
 export default function CartPage() {
@@ -17,8 +16,6 @@ export default function CartPage() {
   const [customerAddress, setCustomerAddress] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({})
-  const [showQRCode, setShowQRCode] = useState(false)
-  const [venmoQRData, setVenmoQRData] = useState('')
   const [orderCreated, setOrderCreated] = useState(false)
   const [createdOrder, setCreatedOrder] = useState<any>(null)
   const [captchaVerified, setCaptchaVerified] = useState(false)
@@ -156,11 +153,11 @@ export default function CartPage() {
     // Use Venmo app deep link for QR code
     const venmoUrl = `venmo://paycharge?txn=pay&recipients=${venmoUsername}&amount=${amount}&note=${encodeURIComponent(note)}`
     
-    // Set QR code data and show it
-    setVenmoQRData(venmoUrl)
-    setShowQRCode(true)
-    
-    // Don't clear cart yet - let customer complete payment first
+    // Clear cart and open QR code in new tab, then redirect to thank you page
+    clearCart()
+    const qrUrl = `/qr-payment?data=${encodeURIComponent(venmoUrl)}&order=${createdOrder.orderNumber}&amount=${amount}`
+    window.open(qrUrl, '_blank')
+    window.location.href = `/thank-you?order=${createdOrder.orderNumber}`
   }
 
   if (state.items.length === 0) {
@@ -476,45 +473,6 @@ export default function CartPage() {
       <div className="bg-gray-50">
         <Footer />
       </div>
-      
-      {/* QR Code Modal */}
-      {showQRCode && venmoQRData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Scan to Pay</h3>
-              <QRCodeGenerator 
-                data={venmoQRData} 
-                size={250}
-                className="mb-4"
-              />
-              <p className="text-sm text-gray-600 mb-4">Scan with your phone's camera or Venmo app</p>
-              <p className="text-xs text-gray-500 mb-6">Order: {createdOrder?.orderNumber}</p>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => {
-                    clearCart()
-                    setShowQRCode(false)
-                    setOrderCreated(false)
-                    // Redirect to thank you page
-                    window.location.href = `/thank-you?order=${createdOrder?.orderNumber}`
-                  }}
-                  className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Payment Complete
-                </button>
-                <button
-                  onClick={() => setShowQRCode(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

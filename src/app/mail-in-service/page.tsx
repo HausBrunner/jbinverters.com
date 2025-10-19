@@ -244,7 +244,7 @@ export default function MailInServicePage() {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <h4 className="font-semibold text-blue-800 mb-2 text-sm">Warranty Process:</h4>
                   <ul className="text-xs text-blue-700 space-y-1">
-                    <li>• Contact us within 90 days with your order numberr</li>
+                    <li>• Contact us within 90 days with your order number</li>
                     <li>• We'll determine if issue is covered</li>
                     <li>• Free repair if covered under warranty</li>
                     <li>• Response within 24-48 hours</li>

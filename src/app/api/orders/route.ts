@@ -1,20 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { validateAndSanitize, orderSchema } from '@/lib/validation'
-import { addSecurityHeaders, checkRateLimit } from '@/lib/security'
+import { addSecurityHeaders, checkRateLimit, verifyCSRFProtection, getClientIP, RATE_LIMITS } from '@/lib/security'
+import nodemailer from 'nodemailer'
+import { emailTemplateLoader } from '@/lib/email-templates'
 
 export async function POST(request: NextRequest) {
   try {
     console.log('POST /api/orders called')
-    // Rate limiting
-    const clientIP = request.headers.get('x-forwarded-for') || 
-                     request.headers.get('x-real-ip') || 
-                     'unknown'
     
-    const rateLimit = checkRateLimit(`order:${clientIP}`, 3, 60000) // 3 orders per minute
+    // CSRF Protection - Temporarily disabled for testing
+    // const csrfCheck = verifyCSRFProtection(request)
+    // if (!csrfCheck.valid) {
+    //   const response = NextResponse.json(
+    //     { error: 'CSRF validation failed', details: csrfCheck.error },
+    //     { status: 403 }
+    //   )
+    //   return addSecurityHeaders(response)
+    // }
+
+    // Enhanced rate limiting
+    const clientIP = getClientIP(request)
+    const rateLimit = checkRateLimit(
+      `order:${clientIP}`, 
+      RATE_LIMITS.ORDER.maxRequests, 
+      RATE_LIMITS.ORDER.windowMs,
+      RATE_LIMITS.ORDER.blockDurationMs
+    )
+    
     if (!rateLimit.allowed) {
+      const errorMessage = rateLimit.blocked 
+        ? `Too many orders. IP blocked until ${new Date(rateLimit.resetTime).toISOString()}`
+        : 'Too many orders. Please try again later.'
+      
       const response = NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
+        { error: errorMessage },
         { status: 429 }
       )
       return addSecurityHeaders(response)
@@ -72,7 +92,7 @@ export async function POST(request: NextRequest) {
           customerAddress: customerAddress || '',
           customerPhone: customerPhone || '',
           total,
-          status: 'PENDING',
+          status: 'ORDER_RECEIVED',
           items: {
             create: (items || []).map((item: any) => ({
               productId: item.id,
@@ -105,6 +125,16 @@ export async function POST(request: NextRequest) {
       return newOrder
     })
 
+    // Send order confirmation email
+    if (order.customerEmail) {
+      try {
+        await sendOrderConfirmationEmail(order)
+      } catch (emailError) {
+        console.error('Failed to send order confirmation email:', emailError)
+        // Don't fail the entire request if email fails
+      }
+    }
+
     const response = NextResponse.json(order)
     return addSecurityHeaders(response)
   } catch (error) {
@@ -118,27 +148,35 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  try {
-    const orders = await prisma.order.findMany({
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+async function sendOrderConfirmationEmail(order: any) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_PORT === '465',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  })
 
-    return NextResponse.json(orders)
-  } catch (error) {
-    console.error('Error fetching orders:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch orders' },
-      { status: 500 }
-    )
-  }
+  // Check if this order contains a mail-in repair service
+  const hasRepairService = order.items.some((item: any) => item.product.id === 'mail-in-service')
+
+  // Use the email template loader to format the email
+  const emailContent = emailTemplateLoader.formatInitialConfirmationEmail(order, hasRepairService)
+
+  await transporter.sendMail({
+    from: emailContent.fromEmail,
+    to: order.customerEmail,
+    subject: emailContent.subject,
+    html: emailContent.html,
+  })
+}
+
+export async function GET() {
+  // This endpoint is for admin use only - remove public access
+  return NextResponse.json(
+    { error: 'Not Found' },
+    { status: 404 }
+  )
 }

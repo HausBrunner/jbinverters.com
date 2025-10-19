@@ -16,7 +16,6 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
     price: '',
     imageUrl: '',
     stock: '',
-    displayOrder: '',
     isActive: true
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -70,7 +69,7 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
               ...formData,
               price: parseFloat(formData.price),
               stock: parseInt(formData.stock),
-              displayOrder: parseInt(formData.displayOrder) || 0,
+              displayOrder: 0, // Default display order, can be sorted later
               imageUrl,
             }),
       })
@@ -86,7 +85,6 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
         price: '',
         imageUrl: '',
         stock: '',
-        displayOrder: '',
         isActive: true
       })
       setImageFile(null)
@@ -198,21 +196,6 @@ export default function AddProductModal({ isOpen, onClose, onProductAdded }: Add
               />
             </div>
 
-            <div>
-              <label htmlFor="displayOrder" className="block text-sm font-medium text-gray-700 mb-1">
-                Display Order
-              </label>
-              <input
-                type="number"
-                id="displayOrder"
-                name="displayOrder"
-                min="0"
-                value={formData.displayOrder}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                placeholder="0"
-              />
-            </div>
           </div>
 
           <div>

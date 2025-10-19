@@ -1,21 +1,49 @@
 import { z } from 'zod'
 
-// Input sanitization function
+// HTML escaping function to prevent XSS in email templates
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;')
+}
+
+// Enhanced input sanitization with security checks
 export function sanitizeInput(input: any): any {
   if (input === null || input === undefined) {
     return input
   }
   
   if (typeof input === 'string') {
-    // Remove potential SQL injection patterns
-    return input
-      .replace(/['"`;\\]/g, '') // Remove quotes and semicolons
-      .replace(/--/g, '') // Remove SQL comments
-      .replace(/\/\*/g, '') // Remove block comment starts
-      .replace(/\*\//g, '') // Remove block comment ends
-      .replace(/xp_/gi, '') // Remove extended stored procedures
-      .replace(/sp_/gi, '') // Remove system stored procedures
+    // Remove null bytes and control characters
+    let sanitized = input
+      .replace(/\0/g, '') // Remove null bytes
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
       .trim()
+    
+    // Check for suspicious patterns
+    const suspiciousPatterns = [
+      /<script[^>]*>.*?<\/script>/gi,
+      /javascript:/gi,
+      /vbscript:/gi,
+      /onload=/gi,
+      /onerror=/gi,
+      /onclick=/gi,
+      /onmouseover=/gi,
+      /data:text\/html/gi,
+      /expression\s*\(/gi
+    ]
+    
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(sanitized)) {
+        throw new Error('Potentially malicious input detected')
+      }
+    }
+    
+    return sanitized
   }
   
   if (Array.isArray(input)) {
@@ -25,6 +53,10 @@ export function sanitizeInput(input: any): any {
   if (typeof input === 'object' && input !== null) {
     const sanitized: any = {}
     for (const [key, value] of Object.entries(input)) {
+      // Validate object keys
+      if (!/^[a-zA-Z0-9_-]+$/.test(key)) {
+        throw new Error('Invalid object key detected')
+      }
       sanitized[key] = sanitizeInput(value)
     }
     return sanitized
@@ -33,42 +65,58 @@ export function sanitizeInput(input: any): any {
   return input
 }
 
-// Validation schemas
+
+// Enhanced validation schemas with security checks
 export const contactMessageSchema = z.object({
   name: z.string()
     .min(1, 'Name is required')
     .max(100, 'Name must be less than 100 characters')
-    .regex(/^[a-zA-Z\s\-'\.]+$/, 'Name contains invalid characters'),
+    .regex(/^[a-zA-Z\s\-'\.]+$/, 'Name contains invalid characters')
+    .refine((val) => !/<script|javascript:|vbscript:/i.test(val), 'Name contains potentially malicious content'),
   email: z.string()
     .min(1, 'Email is required')
     .email('Invalid email format')
-    .max(255, 'Email must be less than 255 characters'),
+    .max(255, 'Email must be less than 255 characters')
+    .refine((val) => !/<script|javascript:|vbscript:/i.test(val), 'Email contains potentially malicious content'),
   message: z.string()
     .min(1, 'Message is required')
     .max(2000, 'Message must be less than 2000 characters')
+    .refine((val) => !/<script|javascript:|vbscript:|onload=|onerror=/i.test(val), 'Message contains potentially malicious content')
 })
 
 export const productSchema = z.object({
   name: z.string()
     .min(1, 'Product name is required')
-    .max(255, 'Product name must be less than 255 characters'),
+    .max(255, 'Product name must be less than 255 characters')
+    .refine((val) => !/<script|javascript:|vbscript:/i.test(val), 'Product name contains potentially malicious content'),
   description: z.string()
     .max(1000, 'Description must be less than 1000 characters')
+    .refine((val) => !val || !/<script|javascript:|vbscript:/i.test(val), 'Description contains potentially malicious content')
     .optional(),
   price: z.number()
     .positive('Price must be positive')
-    .max(999999.99, 'Price too high'),
+    .max(999999.99, 'Price too high')
+    .refine((val) => !isNaN(val) && isFinite(val), 'Price must be a valid number'),
   imageUrl: z.string()
-    .url('Invalid image URL')
     .max(500, 'Image URL too long')
-    .optional(),
+    .optional()
+    .refine((val) => {
+      if (!val) return true // Optional field
+      // Allow relative paths starting with / or valid URLs
+      const isValidPath = val.startsWith('/') || val.startsWith('http://') || val.startsWith('https://')
+      const noScripts = !/<script|javascript:|vbscript:/i.test(val)
+      return isValidPath && noScripts
+    }, 'Image URL must be a valid path or URL without malicious content'),
   stock: z.number()
     .int('Stock must be an integer')
     .min(0, 'Stock cannot be negative')
-    .max(99999, 'Stock too high'),
+    .max(99999, 'Stock too high')
+    .refine((val) => !isNaN(val) && isFinite(val), 'Stock must be a valid number'),
   displayOrder: z.number()
     .int('Display order must be an integer')
     .min(0, 'Display order cannot be negative')
+    .max(9999, 'Display order too high')
+    .refine((val) => !isNaN(val) && isFinite(val), 'Display order must be a valid number')
     .default(0),
   isActive: z.boolean().default(true)
 })
@@ -115,10 +163,10 @@ export const serialNumberSchema = z.object({
     .optional()
 })
 
-// Validation helper function
+// Enhanced validation helper function with security checks
 export function validateAndSanitize<T>(schema: z.ZodSchema<T>, data: any): { success: true; data: T } | { success: false; errors: string[] } {
   try {
-    // First sanitize the input
+    // First sanitize the input (this may throw for malicious content)
     const sanitizedData = sanitizeInput(data)
     
     // Then validate with schema
@@ -129,9 +177,18 @@ export function validateAndSanitize<T>(schema: z.ZodSchema<T>, data: any): { suc
     if (error instanceof z.ZodError) {
       return { 
         success: false, 
-        errors: (error.errors || []).map(err => `${err.path.join('.')}: ${err.message}`)
+        errors: (error.issues || []).map((err: any) => `${err.path.join('.')}: ${err.message}`)
       }
     }
+    
+    // Handle sanitization errors (malicious input detected)
+    if (error instanceof Error && error.message.includes('malicious')) {
+      return { 
+        success: false, 
+        errors: ['Potentially malicious input detected'] 
+      }
+    }
+    
     console.error('Validation error:', error)
     return { success: false, errors: ['Invalid input format'] }
   }

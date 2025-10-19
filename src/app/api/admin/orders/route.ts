@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -13,62 +13,59 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
+    const status = searchParams.get('status')
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
-    const status = searchParams.get('status')
-    const archived = searchParams.get('archived')
+    const archived = searchParams.get('archived') === 'true'
 
     // Build where clause
-    const where: any = {}
-    
+    const where: any = {
+      isArchived: archived
+    }
+
+    // Add search filter
     if (search) {
       where.OR = [
-        { orderNumber: { contains: search } },
-        { customerName: { contains: search } },
-        { customerEmail: { contains: search } },
-        { internalNotes: { contains: search } }
+        { orderNumber: { contains: search, mode: 'insensitive' } },
+        { customerName: { contains: search, mode: 'insensitive' } },
+        { customerEmail: { contains: search, mode: 'insensitive' } }
       ]
     }
 
+    // Add status filter
     if (status && status !== 'ALL') {
       where.status = status
     }
 
-    if (archived === 'true') {
-      where.isArchived = true
-    } else if (archived === 'false') {
-      where.isArchived = false
-    }
-
-    // Build orderBy clause safely
+    // Build orderBy clause
     const orderBy: any = {}
-    if (sortBy === 'createdAt') {
-      orderBy.createdAt = sortOrder
-    } else if (sortBy === 'orderNumber') {
-      orderBy.orderNumber = sortOrder
-    } else if (sortBy === 'total') {
-      orderBy.total = sortOrder
-    } else if (sortBy === 'status') {
-      orderBy.status = sortOrder
-    } else {
-      orderBy.createdAt = 'desc' // default
-    }
+    orderBy[sortBy] = sortOrder
 
     const orders = await prisma.order.findMany({
       where,
+      orderBy,
       include: {
         items: {
           include: {
-            product: true,
-          },
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
         },
         serialNumbers: {
           include: {
-            product: true
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         }
-      },
-      orderBy,
+      }
     })
 
     return NextResponse.json(orders)
@@ -76,6 +73,57 @@ export async function GET(request: Request) {
     console.error('Error fetching orders:', error)
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id, ...updateData } = await request.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
+    }
+
+    const order = await prisma.order.update({
+      where: { id },
+      data: updateData,
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        serialNumbers: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    return NextResponse.json(order)
+  } catch (error) {
+    console.error('Error updating order:', error)
+    return NextResponse.json(
+      { error: 'Failed to update order' },
       { status: 500 }
     )
   }

@@ -56,31 +56,71 @@ export async function POST(request: Request) {
 
   try {
     const rawData = await request.json()
+    console.log('Received data:', rawData)
     
     // Validate productId separately as it's not part of the serial number schema
     if (!rawData.productId || typeof rawData.productId !== 'string') {
+      console.log('Invalid product ID:', rawData.productId)
       return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 })
     }
     
-    // Validate and sanitize serial numbers input
-    const validation = validateAndSanitize(serialNumberSchema, rawData)
-    if (!validation.success) {
+    // Extract serial numbers and notes from the request
+    const { serialNumbers, notes } = rawData
+    const productId = rawData.productId
+    
+    // Validate serial numbers array
+    if (!Array.isArray(serialNumbers) || serialNumbers.length === 0) {
+      console.log('Invalid serial numbers array:', serialNumbers)
       return NextResponse.json(
-        { error: 'Invalid input', details: validation.errors },
+        { error: 'Serial numbers must be a non-empty array' },
+        { status: 400 }
+      )
+    }
+    
+    // Validate each serial number
+    const invalidSerials = serialNumbers.filter(serial => 
+      typeof serial !== 'string' || serial.trim().length === 0
+    )
+    
+    if (invalidSerials.length > 0) {
+      console.log('Invalid serial number entries:', invalidSerials)
+      return NextResponse.json(
+        { error: 'All serial numbers must be non-empty strings' },
         { status: 400 }
       )
     }
 
-    const { productId } = rawData
-    const { serialNumbers, notes } = validation.data
+    // Check for existing serial numbers to avoid duplicates
+    const trimmedSerials = serialNumbers.map((serial: string) => serial.trim())
+    const existingSerials = await prisma.serialNumber.findMany({
+      where: {
+        serialNumber: {
+          in: trimmedSerials
+        }
+      },
+      select: {
+        serialNumber: true
+      }
+    })
+
+    if (existingSerials.length > 0) {
+      const duplicateSerials = existingSerials.map(s => s.serialNumber)
+      return NextResponse.json(
+        { 
+          error: 'Duplicate serial numbers found', 
+          details: `The following serial numbers already exist: ${duplicateSerials.join(', ')}` 
+        }, 
+        { status: 400 }
+      )
+    }
 
     // Create multiple serial numbers
     const createdSerialNumbers = await Promise.all(
-      serialNumbers.map((serial: string) =>
+      trimmedSerials.map((serial: string) =>
         prisma.serialNumber.create({
           data: {
             productId,
-            serialNumber: serial.trim(),
+            serialNumber: serial,
             notes: notes || null,
           }
         })
@@ -90,6 +130,17 @@ export async function POST(request: Request) {
     return NextResponse.json(createdSerialNumbers)
   } catch (error) {
     console.error('Error creating serial numbers:', error)
+    
+    // Handle specific Prisma errors
+    if (error instanceof Error) {
+      if (error.message.includes('Unique constraint failed')) {
+        return NextResponse.json(
+          { error: 'Duplicate serial number detected. Please check for duplicates and try again.' }, 
+          { status: 400 }
+        )
+      }
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

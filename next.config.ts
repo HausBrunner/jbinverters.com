@@ -2,20 +2,18 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
+    // This allows production builds to complete even with ESLint errors
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has type errors.
+    // This allows production builds to complete even with TypeScript errors
     ignoreBuildErrors: true,
   },
-  // Configure API routes for larger uploads
+  // Disable React strict mode for production to reduce dev warnings
+  reactStrictMode: false,
+
+  // Example: Server config options
   serverExternalPackages: [],
-  // Suppress React DevTools message in production
-  reactStrictMode: true,
-  // Increase body size limit for API routes
   serverRuntimeConfig: {
     maxFileSize: '10mb',
   },

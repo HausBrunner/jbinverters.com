@@ -7,8 +7,9 @@ import type { Prisma } from '@prisma/client'
 // PUT /api/admin/serial-numbers/[id] - Update serial number
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const session = await getServerSession(authOptions)
   
   if (!session) {
@@ -19,7 +20,7 @@ export async function PUT(
     const { status, notes } = await request.json()
 
     const updatedSerialNumber = await prisma.serialNumber.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: status || undefined,
         notes: notes || undefined,
@@ -36,8 +37,9 @@ export async function PUT(
 // DELETE /api/admin/serial-numbers/[id] - Delete serial number
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const session = await getServerSession(authOptions)
   
   if (!session) {
@@ -46,7 +48,7 @@ export async function DELETE(
 
   try {
     await prisma.serialNumber.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ success: true })

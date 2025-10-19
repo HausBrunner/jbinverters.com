@@ -1,0 +1,30 @@
+{
+  "orderType": "product",
+  "description": "Email templates for regular product orders",
+  "initialConfirmation": {
+    "subject": "Order Received - Order #[orderNumber] - JB Inverters",
+    "content": "Hello [customerName],\n\nYour order has been received.\n\nOrder Placed: [orderDate]\nShip to Address: [customerAddress]\nOrder Number: [orderNumber]\nItems Ordered: \n[itemsList]\nOrder Total: $[total]\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim",
+    "fromEmail": "jbinverters@gmail.com"
+  },
+  "statusUpdates": {
+    "ORDER_RECEIVED": {
+      "subject": "Order Received - Order #[orderNumber] - JB Inverters",
+      "message": "Hello [customerName],\n\nYour order has been received.\n\nOrder Placed: [orderDate]\nShip to Address: [customerAddress]\nOrder Number: [orderNumber]\nItems Ordered: \n[itemsList]\nOrder Total: $[total]\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "PAID_PENDING_SHIPMENT": {
+      "subject": "Payment Received - Order #[orderNumber] - JB Inverters",
+      "message": "Great news! We have received your payment and your order is now being prepared for shipment.\n\nOrder Placed: [orderDate]\nShip to Address: [customerAddress]\nOrder Number: [orderNumber]\nItems Ordered: \n[itemsList]\nOrder Total: $[total]\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "SHIPPED_AND_COMPLETE": {
+      "subject": "Order Shipped - Order #[orderNumber] - JB Inverters",
+      "message": "Your order has been shipped!\n\n[trackingNumber]\n\nOrder Placed: [orderDate]\nShip to Address: [customerAddress]\nOrder Number: [orderNumber]\nItems Ordered: \n[itemsList]\nOrder Total: $[total]\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    },
+    "CANCELLED": {
+      "subject": "Order Cancelled - Order #[orderNumber] - JB Inverters",
+      "message": "Your order has been cancelled. If you have any questions, please contact us.\n\nThank you for choosing JB Inverters!\n\nBest regards,\nJim"
+    }
+  },
+  "htmlTemplate": {
+    "wrapper": "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\"><h2 style=\"color: #333;\">Order Status Update</h2><p>Dear [customerName],</p><p>[statusMessage]</p><div style=\"background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;\"><h3 style=\"margin-top: 0;\">Order Details:</h3><p><strong>Order Number:</strong> [orderNumber]</p><p><strong>Status:</strong> [statusLabel]</p><p><strong>Total:</strong> $[total]</p></div>[additionalContent]<p>If you have any questions, please don't hesitate to contact us.</p><p>Best regards,<br>JB Inverters Team</p></div>"
+  }
+}

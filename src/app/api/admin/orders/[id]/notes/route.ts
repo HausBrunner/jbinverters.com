@@ -1,32 +1,59 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
-// PUT /api/admin/orders/[id]/notes - Update order notes
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
-  
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
     const { notes } = await request.json()
 
-    const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
-      data: {
-        internalNotes: notes || null
+    if (typeof notes !== 'string') {
+      return NextResponse.json({ error: 'notes must be a string' }, { status: 400 })
+    }
+
+    const order = await prisma.order.update({
+      where: { id },
+      data: { internalNotes: notes },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        },
+        serialNumbers: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
       }
     })
 
-    return NextResponse.json(updatedOrder)
+    return NextResponse.json(order)
   } catch (error) {
     console.error('Error updating order notes:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update order notes' },
+      { status: 500 }
+    )
   }
 }

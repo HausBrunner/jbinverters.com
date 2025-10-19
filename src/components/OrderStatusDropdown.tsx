@@ -11,8 +11,17 @@ interface Order {
   customerAddress: string | null
   customerPhone: string | null
   total: number
-  status: 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+  status: 'ORDER_RECEIVED' | 'PAID_PENDING_SHIPMENT' | 'PAID' | 'CANCELLED' | 'RECEIVED' | 'QUOTE_SENT' | 'REPAIRING' | 'SHIPPED_AND_COMPLETE'
   createdAt: string
+  items?: Array<{
+    id: string
+    product: {
+      id: string
+      name: string
+    }
+    quantity: number
+    price: number
+  }>
 }
 
 interface OrderStatusDropdownProps {
@@ -20,13 +29,21 @@ interface OrderStatusDropdownProps {
   onStatusUpdate: () => void
 }
 
-const statusOptions = [
-  { value: 'PENDING', label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'PAID', label: 'Paid', color: 'bg-blue-100 text-blue-800' },
-  { value: 'PROCESSING', label: 'Processing', color: 'bg-purple-100 text-purple-800' },
-  { value: 'SHIPPED', label: 'Shipped', color: 'bg-indigo-100 text-indigo-800' },
-  { value: 'DELIVERED', label: 'Delivered', color: 'bg-green-100 text-green-800' },
-  { value: 'CANCELLED', label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+const regularStatusOptions = [
+  { value: 'ORDER_RECEIVED', label: 'Order Received', color: 'bg-gray-100 text-gray-800' },
+  { value: 'PAID_PENDING_SHIPMENT', label: 'Payment Received and Order Pending', color: 'bg-blue-100 text-blue-800' },
+  { value: 'SHIPPED_AND_COMPLETE', label: 'Shipped & Complete', color: 'bg-green-100 text-green-800' },
+  { value: 'CANCELLED', label: 'Cancel Order', color: 'bg-red-100 text-red-800' },
+]
+
+const repairStatusOptions = [
+  { value: 'ORDER_RECEIVED', label: 'Order Received', color: 'bg-gray-100 text-gray-800' },
+  { value: 'PAID', label: 'Payment Received', color: 'bg-blue-100 text-blue-800' },
+  { value: 'RECEIVED', label: 'Device Received', color: 'bg-orange-100 text-orange-800' },
+  { value: 'QUOTE_SENT', label: 'Diagnostic Complete and Quote Sent', color: 'bg-pink-100 text-pink-800' },
+  { value: 'REPAIRING', label: 'Repairing', color: 'bg-purple-100 text-purple-800' },
+  { value: 'SHIPPED_AND_COMPLETE', label: 'Shipped & Complete', color: 'bg-green-100 text-green-800' },
+  { value: 'CANCELLED', label: 'Cancel Order', color: 'bg-red-100 text-red-800' },
 ]
 
 export default function OrderStatusDropdown({ order, onStatusUpdate }: OrderStatusDropdownProps) {
@@ -34,6 +51,12 @@ export default function OrderStatusDropdown({ order, onStatusUpdate }: OrderStat
   const [isUpdating, setIsUpdating] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
+  // Check if this order contains a mail-in repair service
+  const hasRepairService = order.items?.some((item: any) => item.product.id === 'mail-in-service') || false
+  
+  // Use repair-specific status options if this is a repair service order
+  const statusOptions = hasRepairService ? repairStatusOptions : regularStatusOptions
+  
   const currentStatus = statusOptions.find(option => option.value === order.status)
 
   const handleStatusChange = async (newStatus: string) => {
@@ -173,7 +196,7 @@ export default function OrderStatusDropdown({ order, onStatusUpdate }: OrderStat
                     }}
                     disabled={option.value === order.status}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center justify-between ${
-                      option.value === order.status ? 'bg-gray-50 text-gray-400 cursor-default' : 'cursor-pointer'
+                      option.value === order.status ? 'bg-gray-50 text-gray-400 cursor-default' : 'cursor-pointer text-gray-900'
                     }`}
                   >
                     <span>{option.label}</span>

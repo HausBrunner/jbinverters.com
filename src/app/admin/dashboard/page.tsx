@@ -13,10 +13,15 @@ import {
   Hash,
   Search,
   Filter,
+  ChevronUp,
+  ChevronDown,
   Archive,
   ArchiveRestore,
   StickyNote,
-  Trash2
+  Trash2,
+  Truck,
+  FileText,
+  Mail
 } from 'lucide-react'
 import AddProductModal from '@/components/AddProductModal'
 import EditProductModal from '@/components/EditProductModal'
@@ -45,8 +50,9 @@ interface Order {
   customerAddress: string | null
   customerPhone: string | null
   total: number
-  status: 'PENDING' | 'PAID' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+  status: 'ORDER_RECEIVED' | 'PAID_PENDING_SHIPMENT' | 'PAID' | 'CANCELLED' | 'RECEIVED' | 'QUOTE_SENT' | 'REPAIRING' | 'SHIPPED_AND_COMPLETE'
   internalNotes: string | null
+  trackingNumber: string | null
   isArchived: boolean
   createdAt: string
   items: {
@@ -69,6 +75,7 @@ interface Order {
       name: string
     }
   }[]
+  repairQuote: string | null
 }
 
 
@@ -98,6 +105,10 @@ export default function AdminDashboard() {
   const [showArchived, setShowArchived] = useState(false)
   const [editingOrderNotes, setEditingOrderNotes] = useState<string | null>(null)
   const [orderNotes, setOrderNotes] = useState('')
+  const [editingTrackingNumber, setEditingTrackingNumber] = useState<string | null>(null)
+  const [trackingNumber, setTrackingNumber] = useState('')
+  const [editingRepairQuote, setEditingRepairQuote] = useState<string | null>(null)
+  const [repairQuote, setRepairQuote] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -217,6 +228,57 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleEditTrackingNumber = (order: Order) => {
+    setEditingTrackingNumber(order.id)
+    setTrackingNumber(order.trackingNumber || '')
+  }
+
+  const handleSaveTrackingNumber = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/tracking`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trackingNumber })
+      })
+
+      if (response.ok) {
+        setEditingTrackingNumber(null)
+        setTrackingNumber('')
+        fetchData()
+      } else {
+        alert('Failed to update tracking number')
+      }
+    } catch (error) {
+      alert('Error updating tracking number')
+    }
+  }
+
+
+  const handleEditRepairQuote = (order: Order) => {
+    setEditingRepairQuote(order.id)
+    setRepairQuote(order.repairQuote || '')
+  }
+
+  const handleSaveRepairQuote = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/repair-quote`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repairQuote }),
+      })
+
+      if (response.ok) {
+        setEditingRepairQuote(null)
+        setRepairQuote('')
+        fetchData() // Refresh data to show updated quote
+      } else {
+        alert('Failed to save repair quote')
+      }
+    } catch (error) {
+      alert('Error saving repair quote')
+    }
+  }
+
 
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return
@@ -240,6 +302,49 @@ export default function AdminDashboard() {
     fetchData() // Refresh data after updating product
     setIsEditProductModalOpen(false)
     setSelectedProduct(null)
+  }
+
+  const handleReorderProduct = async (productId: string, direction: 'up' | 'down') => {
+    const currentProduct = products.find(p => p.id === productId)
+    if (!currentProduct) return
+
+    const currentOrder = currentProduct.displayOrder
+    const newOrder = direction === 'up' ? currentOrder - 1 : currentOrder + 1
+    
+    // Find the product that currently has the target order
+    const targetProduct = products.find(p => p.displayOrder === newOrder)
+    if (!targetProduct) return
+
+    try {
+      // Swap the display orders
+      const [currentRes, targetRes] = await Promise.all([
+        fetch(`/api/admin/products/${productId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...currentProduct,
+            displayOrder: newOrder
+          })
+        }),
+        fetch(`/api/admin/products/${targetProduct.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...targetProduct,
+            displayOrder: currentOrder
+          })
+        })
+      ])
+
+      if (currentRes.ok && targetRes.ok) {
+        fetchData() // Refresh the data
+      } else {
+        alert('Failed to reorder products')
+      }
+    } catch (error) {
+      console.error('Error reordering products:', error)
+      alert('Error reordering products')
+    }
   }
 
   if (status === 'loading' || loading) {
@@ -330,10 +435,11 @@ export default function AdminDashboard() {
                 { id: 'overview', name: 'Overview', icon: Eye },
                 { id: 'products', name: 'Products', icon: Package },
                 { id: 'orders', name: 'Orders', icon: ShoppingCart },
+                { id: 'email-templates', name: 'Email Templates', icon: Mail, isLink: true },
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => tab.isLink ? router.push(`/admin/${tab.id}`) : setActiveTab(tab.id)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
@@ -376,13 +482,18 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">Products</h2>
-                  <button 
-                    onClick={() => setIsAddProductModalOpen(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Product</span>
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-sm text-gray-600">
+                      <span className="font-medium">Sort Order:</span> Lower numbers appear first on main page
+                    </div>
+                    <button 
+                      onClick={() => setIsAddProductModalOpen(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Product</span>
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="overflow-x-auto">
@@ -430,6 +541,22 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-3 py-4 text-sm font-medium">
                             <div className="flex space-x-1 justify-center">
+                              <button 
+                                onClick={() => handleReorderProduct(product.id, 'up')}
+                                className="text-gray-600 hover:text-gray-900 p-1"
+                                title="Move Up"
+                                disabled={product.displayOrder === 1}
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleReorderProduct(product.id, 'down')}
+                                className="text-gray-600 hover:text-gray-900 p-1"
+                                title="Move Down"
+                                disabled={product.displayOrder === products.length}
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
                               <button 
                                 onClick={() => handleManageSerialNumbers(product)}
                                 className="text-purple-600 hover:text-purple-900 p-1"
@@ -501,12 +628,18 @@ export default function AdminDashboard() {
                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
                       >
                         <option value="ALL">All Status</option>
-                        <option value="PENDING">Pending</option>
-                        <option value="PAID">Paid</option>
+                        <option value="ORDER_RECEIVED">Order Received</option>
+                        <option value="PENDING">Pending Payment Verification</option>
+                        <option value="PAID">Payment Received</option>
                         <option value="PROCESSING">Processing</option>
-                        <option value="SHIPPED">Shipped</option>
                         <option value="DELIVERED">Delivered</option>
                         <option value="CANCELLED">Cancelled</option>
+                        <option value="RECEIVED">Device Received</option>
+                        <option value="DIAGNOSING">Diagnose in Progress</option>
+                        <option value="DIAGNOSE_COMPLETE">Diagnose Complete</option>
+                        <option value="QUOTE_SENT">Quote Sent</option>
+                        <option value="REPAIRING">Repairing</option>
+                        <option value="SHIPPED_AND_COMPLETE">Shipped & Complete</option>
                       </select>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -620,6 +753,127 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
+
+                      {/* Tracking Number */}
+                      {/* Always show tracking number for all statuses */}
+                      <div className="px-6 py-3 border-b border-gray-200 bg-green-50">
+                          <div className="flex items-center space-x-2">
+                            <Package className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-800">Tracking Number:</span>
+                            {editingTrackingNumber === order.id ? (
+                              <div className="flex-1 flex items-center space-x-2">
+                                <input
+                                  type="text"
+                                  value={trackingNumber}
+                                  onChange={(e) => setTrackingNumber(e.target.value)}
+                                  className="flex-1 px-2 py-1 text-sm border border-green-300 rounded focus:outline-none focus:ring-1 focus:ring-green-500 text-gray-900"
+                                  placeholder="Enter tracking number..."
+                                />
+                                <button
+                                  onClick={() => handleSaveTrackingNumber(order.id)}
+                                  className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingTrackingNumber(null)
+                                    setTrackingNumber('')
+                                  }}
+                                  className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex-1 flex items-center space-x-2">
+                                <span className="text-sm text-green-700 flex-1">
+                                  {order.trackingNumber || 'No tracking number'}
+                                </span>
+                                <button
+                                  onClick={() => handleEditTrackingNumber(order)}
+                                  className="text-xs text-green-600 hover:text-green-800"
+                                >
+                                  {order.trackingNumber ? 'Edit' : 'Add'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+
+                      {/* Repair Quote - Always show for mail-in repair orders */}
+                      {(() => {
+                        const hasRepairService = order.items?.some((item: any) => item.product.id === 'mail-in-service') || false
+                        return hasRepairService && (
+                        <div className="px-6 py-3 border-b border-gray-200 bg-cyan-50">
+                          <div className="flex items-center space-x-2">
+                            <FileText className="w-4 h-4 text-cyan-600" />
+                            <span className="text-sm font-medium text-cyan-800">Repair Quote:</span>
+                            {editingRepairQuote === order.id ? (
+                              <div className="flex-1 flex items-center space-x-2">
+                                <textarea
+                                  value={repairQuote}
+                                  onChange={(e) => setRepairQuote(e.target.value)}
+                                  className="flex-1 px-2 py-1 text-sm border border-cyan-300 rounded focus:outline-none focus:ring-1 focus:ring-cyan-500 text-gray-900"
+                                  placeholder="Enter repair quote details, including cost and description..."
+                                  rows={3}
+                                />
+                                <div className="flex flex-col space-y-1">
+                                  <button
+                                    onClick={() => handleSaveRepairQuote(order.id)}
+                                    className="text-xs bg-cyan-600 text-white px-2 py-1 rounded hover:bg-cyan-700"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingRepairQuote(null)}
+                                    className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex-1 flex items-center space-x-2">
+                                <span className="text-sm text-cyan-700 flex-1">
+                                  {order.repairQuote || 'No repair quote'}
+                                </span>
+                                <button
+                                  onClick={() => handleEditRepairQuote(order)}
+                                  className="text-xs text-cyan-600 hover:text-cyan-800"
+                                >
+                                  {order.repairQuote ? 'Edit' : 'Add'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        )
+                      })()}
+
+
+                      {/* Shipping Instructions for Mail-in Service */}
+                      {(() => {
+                        const hasRepairService = order.items?.some((item: any) => item.product.id === 'mail-in-service') || false
+                        return order.status === 'PAID' && hasRepairService && (
+                          <div className="px-6 py-3 border-b border-gray-200 bg-blue-50">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <Truck className="w-4 h-4 text-blue-600" />
+                              <span className="text-sm font-medium text-blue-800">Ship-to Instructions:</span>
+                            </div>
+                            <div className="bg-blue-100 rounded-lg p-3 text-sm">
+                              <p className="font-semibold text-blue-900 mb-1">Ship your device to:</p>
+                              <div className="text-blue-800">
+                                <p>JB Inverters</p>
+                                <p>5330 W Palmer Dr</p>
+                                <p>Banning, CA 92220</p>
+                              </div>
+                              <p className="text-xs text-blue-600 mt-2">Include detailed problem description and your contact information.</p>
+                            </div>
+                          </div>
+                        )
+                      })()}
 
                       {/* Serial Numbers */}
                       {order.serialNumbers.length > 0 && (

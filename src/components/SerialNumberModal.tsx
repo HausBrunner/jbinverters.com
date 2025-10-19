@@ -110,7 +110,9 @@ export default function SerialNumberModal({ isOpen, onClose, productId, productN
         setNewNotes('')
         fetchSerialNumbers()
       } else {
-        alert('Failed to add serial numbers')
+        const errorData = await response.json()
+        const errorMessage = errorData.details || errorData.error || 'Failed to add serial numbers'
+        alert(errorMessage)
       }
     } catch (error) {
       alert('Error adding serial numbers')
@@ -141,7 +143,9 @@ export default function SerialNumberModal({ isOpen, onClose, productId, productN
         setEditingId(null)
         fetchSerialNumbers()
       } else {
-        alert('Failed to update serial number')
+        const errorData = await response.json()
+        const errorMessage = errorData.error || 'Failed to update serial number'
+        alert(errorMessage)
       }
     } catch (error) {
       alert('Error updating serial number')
@@ -162,7 +166,9 @@ export default function SerialNumberModal({ isOpen, onClose, productId, productN
       if (response.ok) {
         fetchSerialNumbers()
       } else {
-        alert('Failed to delete serial number')
+        const errorData = await response.json()
+        const errorMessage = errorData.error || 'Failed to delete serial number'
+        alert(errorMessage)
       }
     } catch (error) {
       alert('Error deleting serial number')
